@@ -1,0 +1,79 @@
+<project name="ant-task" default="distribution">
+    <target name="init">
+    <property file="config/project.properties"/>
+      <tstamp>
+       <format property="time_build" pattern="MM-dd-yyyy-HH:mm:ss"/>
+     </tstamp>
+    <echo>the current date is ${time_build}</echo>
+  </target>
+
+    <target name="clean" depends="init">
+        <delete dir="build" />
+	    <delete dir="Distribution" />
+    </target>
+
+    <target name="compile" depends="clean">
+        <mkdir dir="build/classes" />
+        <javac srcdir="src" destdir="build/classes" debug="on" includeantruntime="yes">
+		<classpath>
+			<pathelement path="build/classes"/>
+			<pathelement path="lib/commons-collections-3.2.1.jar"/>
+		</classpath>
+	</javac>
+    </target>
+        
+	<target name="test-compile">
+	<mkdir dir="build/test-classes" />
+	<javac srcdir="test" destdir="build/test-classes" includeantruntime="yes">
+	<classpath>
+	    <pathelement path="build/classes"/>
+	    <pathelement path="lib/junit-4.11.jar"/>
+	</classpath>
+	</javac>
+    </target>
+    
+	<target name="test" depends="compile, test-compile">
+    <mkdir dir="build/test-reports"/>
+    <junit printsummary="yes" haltonfailure="yes" fork="true" forkmode="once">
+	<classpath>
+	    <fileset dir="lib" includes="*.jar" />
+	    <pathelement path="build/classes"/>
+	    <pathelement path="build/test-classes"/>
+	</classpath>
+	<formatter type="xml"/>
+	<formatter type="plain"/>
+	<batchtest fork="yes" todir="build/test-reports">
+	    <fileset dir="test">
+		<include name="**/*Test*.java"/>
+	    </fileset>
+	</batchtest>
+    </junit>
+    </target>
+
+    <target name="jar" depends="test">
+         <jar destfile="build/${time_build}-ant-task.jar" basedir="build/classes">
+            <manifest>
+                <attribute name="Main-Class" value="com.test.Project" />
+            </manifest>
+         </jar>
+    </target>
+  <target name="distribution" depends="jar">
+	  <mkdir dir="Distribution"/>
+       <copy file="./build.xml" tofile="Distribution/build.xml" overwrite="true"/>
+
+       <copy file="lib/commons-collections-3.2.1.jar" tofile="Distribution/commons-collections-3.2.1.jar" overwrite="true"/>
+
+       <copy file="./config/project.properties" tofile="Distribution/project.properties" overwrite="true"/> 
+	  
+       <copy file="build/${time_build}-ant-task.jar" tofile="Distribution/{time_build}-ant-task.jar" overwrite="true"/> 
+
+	<tar destfile="build/${time_build}-ant-task.tar.gz" compression="gzip">
+        <tarfileset dir="Distribution">
+		<include name="${time_build}-ant-task.jar"/>
+		<include name="build.xml"/>
+		<include name="commons-collections-3.2.1.jar"/>
+		<include name="project.properties"/>
+	  </tarfileset>
+	</tar>
+    </target>  
+</project>
